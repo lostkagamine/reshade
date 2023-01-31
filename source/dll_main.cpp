@@ -131,6 +131,20 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
 			g_reshade_dll_path = get_module_path(hModule);
 			g_target_executable_path = get_module_path(nullptr);
 
+			// Block loading in games that are not Final Fantasy XIV
+			if ((g_target_executable_path.filename() != "ffxiv_dx11.exe"
+				&& g_target_executable_path.filename() != "ffxiv.exe")
+				&& !GetEnvironmentVariableW(L"THREESHADE_IGNORE_FFXIV_LOCK", nullptr, 0))
+			{
+				MessageBoxA(NULL,
+					"This build of ReShade is only intended for use with Final Fantasy XIV.",
+					"ThreeShade",
+					MB_ICONERROR | MB_OK);
+
+				// Kill the process to prevent anything weird happening
+				ExitProcess(1);
+			}
+
 			ini_file &config = reshade::global_config();
 
 			const std::filesystem::path module_name = g_reshade_dll_path.stem();
@@ -182,11 +196,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
 				}
 			}
 
-			LOG(INFO) << "Initializing crosire's ReShade version '" VERSION_STRING_FILE "' "
+			LOG(INFO) << "Initializing crosire's ReShade version '" VERSION_STRING_FILE "' (ThreeShade build, "
 #ifndef _WIN64
-				"(32-bit) "
+				"32-bit) "
 #else
-				"(64-bit) "
+				"64-bit) "
 #endif
 				"loaded from " << g_reshade_dll_path << " into " << g_target_executable_path << " ...";
 
